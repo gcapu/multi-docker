@@ -1,0 +1,23 @@
+sudo: required
+services: 
+  - docker 
+
+before_install:
+  - docker build -t copono/react-test -f ./client/Dockerfile.dev ./client 
+
+script:
+  - docker run -e CI=true USERNAME/react-test npm test
+
+after_success:
+  # build all the images
+  - docker build -t copono/multi-client ./client
+  - docker build -t copono/multi-nginx ./nginx
+  - docker build -t copono/multi-server ./server
+  - docker build -t copono/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push copono/multi-client
+  - docker push copono/multi-nginx
+  - docker push copono/multi-server
+  - docker push copono/multi-worker
