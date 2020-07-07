@@ -10,7 +10,9 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // postgres Client Setup
-const {Pool} = require('pg');
+const {
+    Pool
+} = require('pg');
 const pgClient = new Pool({
     user: keys.pgUser,
     host: keys.pgHost,
@@ -18,11 +20,11 @@ const pgClient = new Pool({
     password: keys.pgPassword,
     port: keys.pgPort
 });
-pgClient.on('error', () => console.log('Lost PG connection'));
-
-pgClient
-    .query('CREATE TABLE IF NOT EXISTS values (number INT)')
-    .catch(err => console.log(err));
+pgClient.on('connect', () => {
+    pgClient
+        .query('CREATE TABLE IF NOT EXISTS values (number INT)')
+        .catch((err) => console.log(err));
+});
 
 // Redis Client Setup
 const redis = require('redis');
@@ -62,10 +64,11 @@ app.post('/values', async (req, res) => {
     redisPublisher.publish('insert', index);
     pgClient.query('INSERT INTO values(number) VALUES($1)', [index]);
 
-    res.send({working: true});
+    res.send({
+        working: true
+    });
 });
 
 app.listen(5000, err => {
     console.log('Listening');
 });
-
